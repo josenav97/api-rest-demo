@@ -25,6 +25,24 @@ app.get('/', (req, res) => {
   res.send('API de Restaurantes funcionando!');
 });
 
+// Ruta para crear un nuevo restaurante (POST)
+app.post('/restaurantes', (req, res) => {
+  const { nombre, direccion, telefono, tipo_cocina } = req.body;
+  const sql = 'INSERT INTO restaurantes (nombre, direccion, telefono, tipo_cocina) VALUES (?, ?, ?, ?)';
+
+  db.run(sql, [nombre, direccion, telefono, tipo_cocina], function(err) {
+    if (err) {
+      console.error('Error al insertar en la base de datos', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    // Devuelve el restaurante recién creado con su nuevo ID
+    res.status(201).json({
+      id: this.lastID,
+      ...req.body
+    });
+  });
+});
+
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);
 });

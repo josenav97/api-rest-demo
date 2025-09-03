@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios'; // 1. Importar axios
 
 function RestaurantForm() {
   const [formData, setFormData] = useState({
@@ -16,11 +17,24 @@ function RestaurantForm() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { // 2. Convertir la función a async
     e.preventDefault();
-    // Aquí irá la lógica para enviar los datos a la API
-    console.log('Datos a enviar:', formData);
-    alert('Restaurante guardado (revisa la consola)');
+    try {
+      // 3. Usar axios para enviar una petición POST a la API
+      const response = await axios.post('http://localhost:3001/restaurantes', formData);
+      console.log('Restaurante guardado:', response.data);
+      alert(`Restaurante "${response.data.nombre}" guardado con éxito!`);
+      // Limpiar el formulario después de guardar
+      setFormData({
+        nombre: '',
+        direccion: '',
+        telefono: '',
+        tipo_cocina: ''
+      });
+    } catch (error) {
+      console.error('Error al guardar el restaurante:', error);
+      alert('Hubo un error al guardar el restaurante.');
+    }
   };
 
   return (
