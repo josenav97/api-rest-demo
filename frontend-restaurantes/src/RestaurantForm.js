@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import axios from 'axios'; // 1. Importar axios
+import apiClient from './apiClient'; // Importamos nuestro cliente centralizado
 
-function RestaurantForm() {
+function RestaurantForm({ onRestaurantAdded }) {
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
     telefono: '',
     tipo_cocina: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false); // Estado para controlar el envío
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,42 +19,41 @@ function RestaurantForm() {
     }));
   };
 
-  const handleSubmit = async (e) => { // 2. Convertir la función a async
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true); // Empezamos a enviar, deshabilitamos el botón
+    if (!formData.nombre) {
+      setError('El nombre es obligatorio.');
+      return;
+    }
+    setIsSubmitting(true);
+    setError('');
     try {
-      // 3. Usar axios para enviar una petición POST a la API
-      const response = await axios.post('http://localhost:3001/restaurantes', formData);
-      console.log('Restaurante guardado:', response.data);
+      const response = await apiClient.post('/restaurantes', formData); // Usamos el cliente
       alert(`Restaurante "${response.data.nombre}" guardado con éxito!`);
-      // Limpiar el formulario después de guardar
-      setFormData({
-        nombre: '',
-        direccion: '',
-        telefono: '',
-        tipo_cocina: ''
-      });
-    } catch (error) {
-      console.error('Error al guardar el restaurante:', error);
-      alert('Hubo un error al guardar el restaurante.');
+      onRestaurantAdded(response.data); // Llama a la función para actualizar la lista
+      setFormData({ nombre: '', direccion: '', telefono: '', tipo_cocina: '' }); // Limpiar formulario
+    } catch (err) {
+      console.error('Error al guardar el restaurante:', err);
+      setError('Hubo un error al guardar. Inténtalo de nuevo.');
     } finally {
-      setIsSubmitting(false); // Terminó el envío, habilitamos el botón de nuevo
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} style={{ margin: '20px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
       <h2>Añadir Nuevo Restaurante</h2>
-      <div>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <div style={{ marginBottom: '10px' }}>
         <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre del Restaurante" required />
       </div>
-      <div>
-        <input type="text" name="direccion" value={formData.direccion} onChange={handleChange} placeholder="Dirección" required />
+      <div style={{ marginBottom: '10px' }}>
+        <input type="text" name="direccion" value={formData.direccion} onChange={handleChange} placeholder="Dirección" />
       </div>
-      <div>
+      <div style={{ marginBottom: '10px' }}>
         <input type="text" name="telefono" value={formData.telefono} onChange={handleChange} placeholder="Teléfono" />
       </div>
-      <div>
+      <div style={{ marginBottom: '10px' }}>
         <input type="text" name="tipo_cocina" value={formData.tipo_cocina} onChange={handleChange} placeholder="Tipo de Cocina" />
       </div>
       <button type="submit" disabled={isSubmitting}>
