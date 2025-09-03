@@ -1,52 +1,30 @@
-// index.js
-
-// --- ANOTACIÓN PARA JUNIORS ---
-// Este es el punto de entrada principal de nuestra aplicación.
-// Su trabajo es "orquestar" las demás piezas:
-// 1. Iniciar el servidor Express.
-// 2. Conectar los middlewares (piezas de código que se ejecutan en cada petición).
-// 3. Importar y usar los enrutadores que definen los endpoints de la API.
-// 4. Poner el servidor a escuchar peticiones.
-
-// ===== IMPORTS =====
 const express = require('express');
 const cors = require('cors');
-const db = require('./db'); // Importamos la instancia de la BD
+const sqlite3 = require('sqlite3').verbose();
 
-// Importamos nuestros enrutadores
-const userRoutes = require('./routes/users');
-const restaurantRoutes = require('./routes/restaurants');
-const reservationRoutes = require('./routes/reservations');
-const dashboardRoutes = require('./routes/dashboard');
-
-// ===== CONFIGURACIÓN =====
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3001; // Puerto para el backend
 
-// ===== MIDDLEWARE =====
-app.use(express.json());
-app.use(cors());
+// Middlewares
+app.use(cors()); // Permite peticiones desde el frontend
+app.use(express.json()); // Permite a Express entender JSON en el body
 
-// ===== RUTAS Y CONTROLADORES =====================================
-// Aquí le decimos a Express que use nuestros enrutadores.
-app.use('/', dashboardRoutes); // Ruta para el dashboard en la raíz
-// Todas las rutas en `userRoutes` tendrán el prefijo `/users`.
-app.use('/users', userRoutes);
-app.use('/restaurants', restaurantRoutes);
-app.use('/reservations', reservationRoutes);
-
-// ===== INICIAR SERVIDOR =====
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+// Conectar a la base de datos (la creará si no existe)
+const db = new sqlite3.Database('./restaurantes.db', (err) => {
+  if (err) {
+    console.error('Error al abrir la base de datos', err.message);
+  } else {
+    console.log('Conectado a la base de datos SQLite.');
+    // Crear tabla si no existe
+    db.run('CREATE TABLE IF NOT EXISTS restaurantes (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, direccion TEXT, telefono TEXT, tipo_cocina TEXT)');
+  }
 });
 
-// Manejo del cierre de la aplicación para cerrar la conexión a la BD
-process.on('SIGINT', () => {
-  db.close((err) => {
-    if (err) {
-      return console.error(err.message);
-    }
-    console.log('Conexión a la base de datos cerrada.');
-    process.exit(0);
-  });
+// Ruta de prueba
+app.get('/', (req, res) => {
+  res.send('API de Restaurantes funcionando!');
+});
+
+app.listen(port, () => {
+  console.log(`Servidor escuchando en http://localhost:${port}`);
 });
